@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler  
 from discord_webhook import DiscordWebhook  
 
+# Create logs directory if missing
+log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
 # Configure logging  
 logging.basicConfig(  
     level=logging.INFO,  
