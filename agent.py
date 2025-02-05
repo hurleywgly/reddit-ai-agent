@@ -17,7 +17,9 @@ logging.basicConfig(
         logging.FileHandler('logs/app.log'),  
         logging.StreamHandler()  
     ]  
-)  
+)
+
+logging.FileHandler('/tmp/app.log')  # Use temporary directory  
 
 logger = logging.getLogger(__name__)  
 
@@ -47,3 +49,6 @@ class CryptoAIAgent:
 
 if __name__ == "__main__":  
     CryptoAIAgent().run()  
+
+print(f"Current working directory: {os.getcwd()}")
+print(f"Directory contents: {os.listdir()}")
