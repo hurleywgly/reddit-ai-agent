@@ -36,32 +36,43 @@ class CryptoAIAgent:
         
     def summarize_with_api(self, text):
         """Use Hugging Face API to summarize text"""
-        API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-        headers = {"Authorization": f"Bearer {self.hf_api_token}"}
+        # Try multiple models in case one is unavailable
+        models = [
+            "facebook/bart-large-cnn",
+            "google/flan-t5-base",
+            "sshleifer/distilbart-cnn-12-6"
+        ]
         
-        # Truncate text if too long (API limit)
-        max_length = 500
-        truncated_text = text[:max_length] + "..." if len(text) > max_length else text
-        
-        # BART-specific prompt format
-        prompt = f"""Analyze this cryptocurrency post and determine if it's AI-related:
-        {truncated_text}
-        
-        If it mentions AI/ML technology, provide key points. If not AI-related or seems like a scam, state that clearly."""
-
-        try:
-            response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+        for model in models:
+            API_URL = f"https://api-inference.huggingface.co/models/{model}"
+            headers = {"Authorization": f"Bearer {self.hf_api_token}"}
             
-            if response.status_code != 200:
-                logger.error(f"API request failed with status {response.status_code}: {response.text}")
-                return "Error analyzing post content."
+            # Truncate text if too long (API limit)
+            max_length = 500
+            truncated_text = text[:max_length] + "..." if len(text) > max_length else text
+            
+            prompt = f"""Analyze this cryptocurrency post and determine if it's AI-related:
+            {truncated_text}
+            
+            If it mentions AI/ML technology, provide key points. If not AI-related or seems like a scam, state that clearly."""
+
+            try:
+                logger.info(f"Attempting to use model: {model}")
+                response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
                 
-            summary = response.json()[0]['summary_text'].strip()
-            return summary
+                if response.status_code == 200:
+                    summary = response.json()[0]['summary_text'].strip()
+                    logger.info(f"Successfully used model: {model}")
+                    return summary
+                else:
+                    logger.error(f"Model {model} failed with status {response.status_code}: {response.text}")
+                    continue  # Try next model
                 
-        except Exception as e:
-            logger.error(f"API request failed: {str(e)}")
-            return "Error analyzing post content."
+            except Exception as e:
+                logger.error(f"Error with model {model}: {str(e)}")
+                continue  # Try next model
+        
+        return "Error: Unable to analyze post content with any available model."
 
     def analyze_post(self, post):
         """Analyze a single Reddit post for AI-related content"""

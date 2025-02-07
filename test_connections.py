@@ -58,11 +58,11 @@ def test_discord():
 def test_huggingface():
     print("\n=== Testing Hugging Face API ===")
     
-    # Test multiple models to find the best working one
+    # Test multiple models in same order as agent.py
     models = [
-        "meta-llama/Llama-2-7b-chat-hf",  # Try Llama-2 first
-        "google/flan-t5-base",            # Fallback option 1
-        "facebook/bart-large-cnn"         # Fallback option 2
+        "facebook/bart-large-cnn",        # Primary model
+        "google/flan-t5-base",           # Fallback option 1
+        "sshleifer/distilbart-cnn-12-6"  # Fallback option 2
     ]
     
     headers = {"Authorization": f"Bearer {os.getenv('HF_API_TOKEN')}"}
