@@ -16,12 +16,9 @@ logging.basicConfig(
     level=logging.INFO,  
     format='%(asctime)s - %(levelname)s - %(message)s',  
     handlers=[  
-        logging.FileHandler('logs/app.log'),  
-        logging.StreamHandler()  
+        logging.StreamHandler()  # This will output to Render's log stream
     ]  
 )
-
-logging.FileHandler('/tmp/app.log')  # Use temporary directory  
 
 logger = logging.getLogger(__name__)  
 
@@ -192,14 +189,36 @@ class CryptoAIAgent:
         except Exception as e:  
             logger.error(f"Job failed: {str(e)}")  
 
+    def health_check(self):
+        """Verify all connections are working"""
+        try:
+            # Test Reddit connection
+            self.reddit.user.me()
+            
+            # Test Discord webhook
+            test_webhook = DiscordWebhook(
+                url=self.discord_webhook_url,
+                content="🟢 CryptoAIAgent health check"
+            )
+            test_webhook.execute()
+            
+            logger.info("Health check passed - all connections working")
+            return True
+        except Exception as e:
+            logger.error(f"Health check failed: {str(e)}")
+            return False
+
     def run(self):
         try:
-            logger.info("Setting up scheduled job...")
-            self.scheduler.add_job(self.job, 'interval', hours=24)
-            self.scheduler.start()
-                
+            logger.info("Starting one-time job execution...")
+            if self.health_check():
+                self.job()
+                logger.info("Job completed successfully")
+            else:
+                raise Exception("Health check failed")
         except Exception as e:
             logger.error(f"Error in run method: {str(e)}")
+            raise
 
 if __name__ == "__main__":  
     # Remove test_mode=True to run in production mode
